@@ -188,7 +188,7 @@ graph TB
     
     CheckSharedAccommodation -->|True| RejectedSharedAccom[<b>REJECTED</b>]
     
-    CheckSharedAccommodation -->|False| CheckInactiveReasons{Any activated property<br/>with Inactive Reasons:<br/>LETOUT, LETOUT_NOBROKER<br/>LETOUT_UNKNOWN, SOLDOUT<br/>SOLDOUT_NOBROKER<br/>SOLDOUT_UNKNOWN?}
+    CheckSharedAccommodation -->|False| CheckInactiveReasons{Any activated property<br/>with Inactive Reasons:<br/>LETOUT, LETOUT_NOBROKER<br/>LETOUT_UNKNOWN, SOLDOUT<br/>SOLDOUT_NOBROKER<br/>SOLDOUT_UNKNOWN?(T-3 days)}
     
     CheckUserState -->|Submitter OR Owner<br/>State is BROKER| RejectedBroker[<b>REJECTED</b>]
     
@@ -340,4 +340,5 @@ graph TB
     </script>
 </body>
 </html>
+
 
