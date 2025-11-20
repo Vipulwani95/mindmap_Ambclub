@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Verification Flow</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 1400px;
+            width: 100%;
+            animation: fadeInUp 0.8s ease-out;
+        }
+        
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 600px;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4);
+        }
+        
+        .legend {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .legend h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .legend-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .legend-color {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            border: 2px solid #333;
+        }
+        
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @media print {
+            body {
+                background: white;
+            }
+            
+            .controls {
+                display: none;
+            }
+            
+            .container {
+                box-shadow: none;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔄 Payment Verification Flow</h1>
+        <p>Lead Processing & Decision Workflow</p>
+    </div>
+    
+    <div class="container">
+        <div class="mermaid">
+graph TB
+    Start([Lead Received]) --> CheckIncomingState{Check<br/>incomingState}
+    
+    CheckIncomingState -->|REJECTED| Rejected[<b>REJECTED</b>]
+    CheckIncomingState -->|RENEWED| RenewedRejected[<b>RENEWED</b>]
+    
+    CheckIncomingState -->|NEW<br/>REACTIVATION<br/>REACTIVATION_OTHER_PROP_TYPE| GetOwner[Get the OwnerId and identify<br/>the properties activated<br/>from T-10 days till T-3 days]
+    
+    GetOwner --> CheckUserState{Check Submitter<br/>& Owner<br/>User State}
+    
+    CheckUserState -->|Both GENUINE| CheckSharedAccommodation{Check<br/>property_shared_<br/>accommodation}
+    
+    CheckSharedAccommodation -->|True| RejectedSharedAccom[<b>REJECTED</b>]
+    
+    CheckSharedAccommodation -->|False| CheckInactiveReasons{Any activated property<br/>with Inactive Reasons:<br/>LETOUT, LETOUT_NOBROKER<br/>LETOUT_UNKNOWN, SOLDOUT<br/>SOLDOUT_NOBROKER<br/>SOLDOUT_UNKNOWN?}
+    
+    CheckUserState -->|Submitter OR Owner<br/>State is BROKER| RejectedBroker[<b>REJECTED</b>]
+    
+    CheckUserState -->|Submitter OR Owner<br/>State is INPROGRESS| HoldInProgress[<b>HOLD</b><br/>Wait for 10 days]
+    
+    HoldInProgress --> RejectedInProgress[<b>REJECTED</b>]
+    
+    CheckInactiveReasons -->|Yes| UpdatePaymentFailed[Update lead with currentState:<br/><b>PAYMENT_VERIFICATION_<br/>FAILED_INACTIVE_REASON</b>]
+    
+    CheckInactiveReasons -->|No<br/>or Blank<br/>or all active| CheckLetout3Months{Last Letout date<br/>within 3 months of<br/>latest activation date?}
+    
+    CheckLetout3Months -->|Yes| UpdateRenew[Update lead with currentState:<br/><b>RENEW</b>]
+    
+    CheckLetout3Months -->|No| CheckLetout3Days{Last Letout date<br/>within 3 days of<br/>latest activation date?}
+    
+    CheckLetout3Days -->|Yes| UpdateLetout[Update lead with currentState:<br/><b>PAYMENT_VERIFICATION_<br/>FAILED_LETOUT</b>]
+    
+    CheckLetout3Days -->|No| CheckPGFlatmate{Property Type of<br/>activated property<br/>is PG/Flatmate?}
+    
+    CheckPGFlatmate -->|Yes| UpdateIneligible[Update lead with currentState:<br/><b>PAYMENT_VERIFICATION_<br/>INELIGIBLE_TYPE</b>]
+    
+    CheckPGFlatmate -->|No| CheckPropertyType{Check for<br/>property Type}
+    
+    CheckPropertyType --> TypeSplit{Property Type?}
+    
+    TypeSplit -->|Commercial/Plot| PAIDCommercial[<b>PAID with identifier as Listed</b><br/>Standalone - 150]
+    
+    TypeSplit -->|Rent/Buy| CheckPropertySubType{Property<br/>SubType?}
+    
+    CheckPropertySubType -->|IH/SB| PAIDStandalone[<b>PAID with identifier as Listed</b><br/>Standalone - 150]
+    
+    CheckPropertySubType -->|AP/GC| CheckAPGC{AP/GC with<br/>building ID?}
+    
+    CheckAPGC -->|Yes| PAIDApartment500[<b>PAID with identifier as Listed</b><br/>Apartment - 500]
+    
+    CheckAPGC -->|No| CheckPrice{Rent > 10k<br/>OR<br/>Buy Price > 25L?}
+    
+    CheckPrice -->|Yes| PAIDApartment500[<b>PAID with identifier as Listed</b><br/>Apartment - 500]
+    
+    CheckPrice -->|No| PAIDApartment150[<b>PAID with identifier as Listed</b><br/>Apartment - 150]
+    
+    style Start fill:#e1f5ff,stroke:#0288d1,stroke-width:3px,color:#000
+    style Rejected fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#000
+    style RenewedRejected fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#000
+    style RejectedBroker fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#000
+    style RejectedInProgress fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#000
+    style RejectedSharedAccom fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#000
+    style HoldInProgress fill:#fff3e0,stroke:#ff6f00,stroke-width:2px,color:#000
+    style UpdatePaymentFailed fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#000
+    style UpdateRenew fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000
+    style UpdateLetout fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#000
+    style UpdateIneligible fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#000
+    style PAIDCommercial fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000
+    style PAIDStandalone fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000
+    style PAIDApartment500 fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000
+    style PAIDApartment150 fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000
+    style CheckIncomingState fill:#fff9c4,stroke:#f57f17,stroke-width:2px,color:#000
+    style CheckUserState fill:#fff9c4,stroke:#f57f17,stroke-width:2px,color:#000
+    style CheckSharedAccommodation fill:#fff9c4,stroke:#f57f17,stroke-width:2px,color:#000
+    style CheckInactiveReasons fill:#fff9c4,stroke:#f57f17,stroke-width:2px,color:#000
+    style CheckLetout3Months fill:#fff9c4,stroke:#f57f17,stroke-width:2px,color:#000
+    style CheckLetout3Days fill:#fff9c4,stroke:#f57f17,stroke-width:2px,color:#000
+    style CheckPGFlatmate fill:#fff9c4,stroke:#f57f17,stroke-width:2px,color:#000
+    style CheckPropertyType fill:#fff9c4,stroke:#f57f17,stroke-width:2px,color:#000
+    style TypeSplit fill:#fff9c4,stroke:#f57f17,stroke-width:2px,color:#000
+    style CheckPropertySubType fill:#fff9c4,stroke:#f57f17,stroke-width:2px,color:#000
+    style CheckAPGC fill:#fff9c4,stroke:#f57f17,stroke-width:2px,color:#000
+    style CheckPrice fill:#fff9c4,stroke:#f57f17,stroke-width:2px,color:#000
+    style GetOwner fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
+        </div>
+        
+        <div class="legend">
+            <h3>📊 Legend</h3>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <div class="legend-color" style="background:#e1f5ff; border-color:#0288d1;"></div>
+                    <span>Start Point</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background:#fff9c4; border-color:#f57f17;"></div>
+                    <span>Decision Point</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background:#e3f2fd; border-color:#1976d2;"></div>
+                    <span>Process Step</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background:#ffebee; border-color:#c62828;"></div>
+                    <span>Rejected</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background:#fff3e0; border-color:#ff6f00;"></div>
+                    <span>Hold/Failed</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background:#e8f5e9; border-color:#2e7d32;"></div>
+                    <span>Approved/Paid</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn btn-primary" onclick="window.print()">🖨️ Print Diagram</button>
+            <button class="btn btn-secondary" onclick="downloadSVG()">💾 Download as SVG</button>
+            <button class="btn btn-primary" onclick="zoomIn()">🔍 Zoom In</button>
+            <button class="btn btn-primary" onclick="zoomOut()">🔍 Zoom Out</button>
+        </div>
+    </div>
+    
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+        
+        let currentZoom = 1;
+        
+        function zoomIn() {
+            currentZoom += 0.1;
+            document.querySelector('.mermaid').style.transform = `scale(${currentZoom})`;
+        }
+        
+        function zoomOut() {
+            if (currentZoom > 0.5) {
+                currentZoom -= 0.1;
+                document.querySelector('.mermaid').style.transform = `scale(${currentZoom})`;
+            }
+        }
+        
+        function downloadSVG() {
+            const svg = document.querySelector('.mermaid svg');
+            if (svg) {
+                const serializer = new XMLSerializer();
+                const svgString = serializer.serializeToString(svg);
+                const blob = new Blob([svgString], { type: 'image/svg+xml' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'payment-verification-flow.svg';
+                link.click();
+                URL.revokeObjectURL(url);
+            }
+        }
+    </script>
+</body>
+</html>
